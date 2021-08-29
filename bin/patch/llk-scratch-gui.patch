@@ -1,0 +1,31 @@
+diff --git a/src/containers/extension-library.jsx b/src/containers/extension-library.jsx
+index b46d992c0ab33e10fe5814ab91799c2c68aee3b4..e7acb7921159cb5bbf82cc238326dc3ca674e6a6 100644
+--- a/src/containers/extension-library.jsx
++++ b/src/containers/extension-library.jsx
+@@ -25,6 +25,17 @@ const messages = defineMessages({
+ class ExtensionLibrary extends React.PureComponent {
+     constructor (props) {
+         super(props);
++        extensionLibraryContent.forEach(extension => {
++            if (extension.setFormatMessage) {
++                extension.setFormatMessage(this.props.intl.formatMessage);
++            }
++            if (extension.translationMap) {
++                Object.assign(
++                    this.props.intl.messages,
++                    extension.translationMap[this.props.intl.locale]
++                );
++            }
++        });
+         bindAll(this, [
+             'handleItemSelect'
+         ]);
+@@ -37,7 +48,7 @@ class ExtensionLibrary extends React.PureComponent {
+             url = prompt(this.props.intl.formatMessage(messages.extensionUrl));
+         }
+         if (id && !item.disabled) {
+-            if (this.props.vm.extensionManager.isExtensionLoaded(url)) {
++            if (this.props.vm.extensionManager.isExtensionLoaded(id)) {
+                 this.props.onCategorySelected(id);
+             } else {
+                 this.props.vm.extensionManager.loadExtensionURL(url).then(() => {
