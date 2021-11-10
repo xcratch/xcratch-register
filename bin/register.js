@@ -152,7 +152,7 @@ if (managerCode.includes(`builtinExtensions.${ExtId}`)) {
     console.log(`Already registered in manager: ${ExtId}`);
 } else {
     fs.copyFileSync(VmExtManagerFile, `${VmExtManagerFile}.orig`);
-    managerCode = managerCode.replace(/builtinExtensions = {[\s\S]*?};/, `$&\n\nbuiltinExtensions.${ExtId} = () => require('../extensions/${ExtDirName}');`);
+    managerCode = managerCode.replace(/builtinExtensions = {[\s\S]*?};/, `$&\n\nbuiltinExtensions.${ExtId} = () => {\n    const ext = require('../extensions/${ExtDirName}');\n    return ext.default ? ext.default : ext;\n};`);
     fs.writeFileSync(VmExtManagerFile, managerCode);
     console.log(`Registered in manager: ${ExtId}`);
 }
