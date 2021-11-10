@@ -148,7 +148,7 @@ if (args['url']) {
 
 // Add the extension to extension manager of scratch-vm. 
 let managerCode = fs.readFileSync(VmExtManagerFile, 'utf-8');
-if (managerCode.includes(ExtId)) {
+if (managerCode.includes(`builtinExtensions.${ExtId}`)) {
     console.log(`Already registered in manager: ${ExtId}`);
 } else {
     fs.copyFileSync(VmExtManagerFile, `${VmExtManagerFile}.orig`);
@@ -160,7 +160,7 @@ if (managerCode.includes(ExtId)) {
 if (args['C']) {
     // Add the extension as a core extension. 
     let vmCode = fs.readFileSync(VmVirtualMachineFile, 'utf-8');
-    if (vmCode.includes(ExtId)) {
+    if (vmCode.includes(`CORE_EXTENSIONS.push('${ExtId}')`)) {
         console.log(`Already added as a core extension: ${ExtId}`);
     } else {
         fs.copyFileSync(VmVirtualMachineFile, `${VmVirtualMachineFile}.orig`);
@@ -172,7 +172,7 @@ if (args['C']) {
 
 // Add the extension to list of scratch-gui. 
 let indexCode = fs.readFileSync(GuiExtIndexFile, 'utf-8');
-if (indexCode.includes(ExtId)) {
+if (indexCode.includes(`import ${ExtId}`)) {
     console.log(`Already added to extension list: ${ExtId}`);
 } else {
     fs.copyFileSync(GuiExtIndexFile, `${GuiExtIndexFile}.orig`);
