@@ -86,11 +86,11 @@ const VmRoot = args['vm'] ?
 
 const ExtBlockPath = args['block'] ?
     path.resolve(process.cwd(), args['block']) :
-    path.resolve(process.cwd(), './src/block');
+    path.resolve(process.cwd(), './src/vm/extensions/block');
 
 const ExtEntryPath = args['entry'] ?
     path.resolve(process.cwd(), args['entry']) :
-    path.resolve(process.cwd(), './src/entry');
+    path.resolve(process.cwd(), './src/gui/lib/libraries/extensions/entry');
 
 const VmExtDirPath = path.resolve(VmRoot, `src/extensions/${ExtDirName}`);
 const GuiExtDirPath = path.resolve(GuiRoot, `src/lib/libraries/extensions/${ExtDirName}`);
@@ -189,3 +189,18 @@ if (indexCode.includes(`import ${ExtId}`)) {
     fs.writeFileSync(GuiExtIndexFile, indexCode);
     console.log(`Added to extension list: ${ExtId}`);
 }
+
+// Setup dev-server to live-reload when the block code was changed.
+const webpackConfig = fs.readFileSync(path.resolve(GuiRoot, 'webpack.config.js'), 'utf-8');
+if (!webpackConfig.includes('symlinks: true')) {
+    try {
+        execSync(`cd ${GuiRoot} && patch -p1 -N -s < ${path.resolve(__dirname, 'patch/dev_server.patch')}`);
+        console.log(`Apply patch: dev_server.patch`);
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+// Make links to VM sources for file resolving by dev-server.
+makeSymbolicLink(path.resolve(VmRoot, `src/extension-support`), path.resolve(ExtBlockPath, '../../extension-support'));
+makeSymbolicLink(path.resolve(VmRoot, `src/util`), path.resolve(ExtBlockPath, '../../util'));
