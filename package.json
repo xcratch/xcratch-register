@@ -1,6 +1,6 @@
 {
   "name": "xcratch-register",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Support tool to register an extension in Xcratch",
   "bin": {
     "xcratch-register": "./bin/register.js"
