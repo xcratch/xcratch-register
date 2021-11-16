@@ -8,6 +8,7 @@
 const path = require('path');
 const fs = require('fs');
 const { execSync } = require('child_process');
+const projectJson = require('../package.json');
 
 function getArgs() {
     const args = {};
@@ -64,6 +65,11 @@ function copyDir(src, dest) {
             copyDir(srcPath, destPath) :
             fs.copyFileSync(srcPath, destPath);
     }
+}
+
+if (args['version'] || args['V']) {
+    process.stdout.write(`v${projectJson.version}\n`);
+    process.exit(0);
 }
 
 if (!args['id']) {
