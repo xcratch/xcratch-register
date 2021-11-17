@@ -125,6 +125,14 @@ if (args['link']) {
     makeSymbolicLink(ExtBlockPath, VmExtDirPath);
     // Make symbolic link in scratch-gui. 
     makeSymbolicLink(ExtEntryPath, GuiExtDirPath);
+    // Setup dev-server to live-reload when the block code was changed.
+    const WebPackConfigFile = path.resolve(GuiRoot, 'webpack.config.js');
+    let webpackConfig = fs.readFileSync(WebPackConfigFile, 'utf-8');
+    webpackConfig = webpackConfig.replace(/symlinks:\s*false/, `symlinks: true`);
+    fs.writeFileSync(WebPackConfigFile, webpackConfig);
+    // Make links to VM sources for file resolving by dev-server.
+    makeSymbolicLink(path.resolve(VmRoot, `src/extension-support`), path.resolve(ExtBlockPath, '../../extension-support'));
+    makeSymbolicLink(path.resolve(VmRoot, `src/util`), path.resolve(ExtBlockPath, '../../util'));
 } else {
     fs.renameSync(VmExtDirPath, `${VmExtDirPath}~`);
     // Copy block dir to scratch-vm. 
@@ -195,18 +203,3 @@ if (indexCode.includes(`import ${ExtId}`)) {
     fs.writeFileSync(GuiExtIndexFile, indexCode);
     console.log(`Added to extension list: ${ExtId}`);
 }
-
-// Setup dev-server to live-reload when the block code was changed.
-const webpackConfig = fs.readFileSync(path.resolve(GuiRoot, 'webpack.config.js'), 'utf-8');
-if (!webpackConfig.includes('symlinks: true')) {
-    try {
-        execSync(`cd ${GuiRoot} && patch -p1 -N -s < ${path.resolve(__dirname, 'patch/dev_server.patch')}`);
-        console.log(`Apply patch: dev_server.patch`);
-    } catch (err) {
-        console.log(err);
-    }
-}
-
-// Make links to VM sources for file resolving by dev-server.
-makeSymbolicLink(path.resolve(VmRoot, `src/extension-support`), path.resolve(ExtBlockPath, '../../extension-support'));
-makeSymbolicLink(path.resolve(VmRoot, `src/util`), path.resolve(ExtBlockPath, '../../util'));
