@@ -24,5 +24,8 @@
   "bugs": {
     "url": "https://github.com/xcratch/xcratch-register/issues"
   },
-  "homepage": "https://github.com/xcratch/xcratch-register#readme"
+  "homepage": "https://github.com/xcratch/xcratch-register#readme",
+  "dependencies": {
+    "yargs": "^17.2.1"
+  }
 }

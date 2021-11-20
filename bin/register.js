@@ -8,32 +8,69 @@
 const path = require('path');
 const fs = require('fs');
 const { execSync } = require('child_process');
-const projectJson = require('../package.json');
+// const projectJson = require('../package.json');
+const yargs = require('yargs')
 
-function getArgs() {
-    const args = {};
-    process.argv
-        .slice(2, process.argv.length)
-        .forEach(arg => {
-            if (arg.slice(0, 2) === '--') {
-                // long arg
-                const longArg = arg.split('=');
-                const longArgFlag = longArg[0].slice(2, longArg[0].length);
-                const longArgValue = longArg.length > 1 ? longArg[1] : true;
-                args[longArgFlag] = longArgValue;
-            }
-            else if (arg[0] === '-') {
-                // flags
-                const flags = arg.slice(1, arg.length).split('');
-                flags.forEach(flag => {
-                    args[flag] = true;
-                });
-            }
-        });
-    return args;
-}
-
-const args = getArgs();
+const argv = yargs
+    .option('id',
+        {
+            description: 'ID of the extension',
+            type: 'string',
+            demandOption: true
+        })
+    .option('dir',
+        {
+            description: 'Path of the extension',
+            type: 'string'
+        })
+    .option('gui',
+        {
+            description: 'Path of scratch-gui',
+            type: 'string',
+            default: '../scratch-gui'
+        })
+    .option('vm',
+        {
+            description: 'Path of scratch-vm',
+            type: 'string'
+        })
+    .option('block',
+        {
+            description: 'Path of block',
+            type: 'string',
+            default: './src/vm/extensions/block'
+        })
+    .option('entry',
+        {
+            description: 'Path of entry',
+            type: 'string',
+            default: './src/gui/lib/libraries/extensions/entry'
+        })
+    .option('base',
+        {
+            description: 'Scratch to install the extension',
+            type: 'string'
+        })
+    .option('link',
+        {
+            description: 'Whether the extension is installed as link or not (copy)',
+            type: 'boolean',
+            default: false
+        })
+    .option('url',
+        {
+            description: 'URL of the extension',
+            type: 'string'
+        })
+    .option('core',
+        {
+            description: 'Whether the extension appears on the editor at open',
+            alias: 'C',
+            type: 'boolean',
+            default: false
+        })
+    .help()
+    .argv
 
 // Make symbolic link
 function makeSymbolicLink(to, from) {
@@ -67,36 +104,21 @@ function copyDir(src, dest) {
     }
 }
 
-if (args['version'] || args['V']) {
-    process.stdout.write(`v${projectJson.version}\n`);
-    process.exit(0);
-}
 
-if (!args['id']) {
-    process.stderr.write('"--id <extensionID>" is not set\n');
-    process.exit(1);
-}
+const ExtId = argv.id;
 
-const ExtId = args['id'];
-
-const ExtDirName = args['dir'] ?
-    args['dir'] :
+const ExtDirName = argv.dir ?
+    argv.dir :
     ExtId;
 
-const GuiRoot = args['gui'] ?
-    path.resolve(process.cwd(), args['gui']) :
-    path.resolve(process.cwd(), '../scratch-gui');
-const VmRoot = args['vm'] ?
-    path.resolve(process.cwd(), args['vm']) :
+const GuiRoot = path.resolve(process.cwd(), argv.gui);
+const VmRoot = argv.vm ?
+    path.resolve(process.cwd(), argv.vm) :
     path.resolve(GuiRoot, './node_modules/scratch-vm');
 
-const ExtBlockPath = args['block'] ?
-    path.resolve(process.cwd(), args['block']) :
-    path.resolve(process.cwd(), './src/vm/extensions/block');
+const ExtBlockPath = path.resolve(process.cwd(), argv.block);
 
-const ExtEntryPath = args['entry'] ?
-    path.resolve(process.cwd(), args['entry']) :
-    path.resolve(process.cwd(), './src/gui/lib/libraries/extensions/entry');
+const ExtEntryPath = path.resolve(process.cwd(), argv.entry);
 
 const VmExtDirPath = path.resolve(VmRoot, `src/extensions/${ExtDirName}`);
 const GuiExtDirPath = path.resolve(GuiRoot, `src/lib/libraries/extensions/${ExtDirName}`);
@@ -109,7 +131,7 @@ const VmVirtualMachineFile = path.resolve(VmRoot, './src/virtual-machine.js');
 const GuiExtIndexFile = path.resolve(GuiRoot, './src/lib/libraries/extensions/index.jsx');
 
 // Apply patch if it was the original Scratch
-if (args['base'] === 'LLK') {
+if (argv.base === 'LLK') {
     try {
         execSync(`cd ${VmRoot} && patch -p1 -N -s < ${path.resolve(__dirname, 'patch/llk-scratch-vm.patch')}`);
         console.log(`Apply patch: llk-scratch-vm.patch`);
@@ -120,7 +142,7 @@ if (args['base'] === 'LLK') {
     }
 }
 
-if (args['link']) {
+if (argv.link) {
     // Make symbolic link in scratch-vm. 
     makeSymbolicLink(ExtBlockPath, VmExtDirPath);
     // Make symbolic link in scratch-gui. 
@@ -145,8 +167,8 @@ if (args['link']) {
 }
 
 // Replace URL in entry and block code.
-if (args['url']) {
-    const url = args['url'];
+if (argv.url) {
+    const url = argv.url;
     // Replace URL in entry
     let entryCode = fs.readFileSync(EntryFile, 'utf-8');
     entryCode = entryCode.replace(/extensionURL:\s*[^,]+,/m, `extensionURL: '${url}',`);
@@ -171,7 +193,7 @@ if (managerCode.includes(`builtinExtensions.${ExtId}`)) {
     console.log(`Registered in manager: ${ExtId}`);
 }
 
-if (args['C']) {
+if (argv.core) {
     // Add the extension as a core extension. 
     let vmCode = fs.readFileSync(VmVirtualMachineFile, 'utf-8');
     if (vmCode.includes(`CORE_EXTENSIONS.push('${ExtId}')`)) {
