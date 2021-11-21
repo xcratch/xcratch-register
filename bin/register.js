@@ -6,7 +6,7 @@
  */
 
 const path = require('path');
-const fs = require('fs');
+const fs = require('fs-extra');
 const { execSync } = require('child_process');
 // const projectJson = require('../package.json');
 const yargs = require('yargs')
@@ -99,15 +99,12 @@ function makeSymbolicLink(to, from) {
 }
 
 function copyDir(src, dest) {
-    fs.mkdirSync(dest, { recursive: true });
-    const entries = fs.readdirSync(src, { withFileTypes: true });
-    for (const entry of entries) {
-        const srcPath = path.join(src, entry.name);
-        const destPath = path.join(dest, entry.name);
-        entry.isDirectory() ?
-            copyDir(srcPath, destPath) :
-            fs.copyFileSync(srcPath, destPath);
+    try {
+        fs.renameSync(dest, `${dest}~`);
+    } catch (err) {
+        // not exists
     }
+    fs.copySync(src, dest);
 }
 
 
@@ -165,11 +162,9 @@ if (argv.link) {
         });
     }
 } else {
-    fs.renameSync(VmExtDirPath, `${VmExtDirPath}~`);
     // Copy block dir to scratch-vm. 
     copyDir(ExtBlockPath, VmExtDirPath);
     console.log(`copy dir ${ExtBlockPath} -> ${VmExtDirPath}`);
-    fs.renameSync(GuiExtDirPath, `${GuiExtDirPath}~`);
     // Copy entry dir in scratch-gui. 
     copyDir(ExtEntryPath, GuiExtDirPath);
     console.log(`copy dir ${ExtEntryPath} -> ${GuiExtDirPath}`);

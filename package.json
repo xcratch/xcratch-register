@@ -26,6 +26,7 @@
   },
   "homepage": "https://github.com/xcratch/xcratch-register#readme",
   "dependencies": {
+    "fs-extra": "^10.0.0",
     "yargs": "^17.2.1"
   }
 }
