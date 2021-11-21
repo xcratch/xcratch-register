@@ -19,3 +19,16 @@ index 7cb556c5..82e65c01 100644
          return new Promise((resolve, reject) => {
              // If we `require` this at the global level it breaks non-webpack targets, including tests
              const ExtensionWorker = require('worker-loader?name=extension-worker.js!./extension-worker');
+diff --git a/src/virtual-machine.js b/src/virtual-machine.js
+index 131c421c..976bdbc2 100644
+--- a/src/virtual-machine.js
++++ b/src/virtual-machine.js
+@@ -52,6 +52,8 @@ class VirtualMachine extends EventEmitter {
+          * @type {!Runtime}
+          */
+         this.runtime = new Runtime();
++        this.runtime.formatMessage = formatMessage; // allow extensions to access formatMessage
++        this.runtime.vm = this; // allow extensions to access the VirtualMachine
+         centralDispatch.setService('runtime', this.runtime).catch(e => {
+             log.error(`Failed to register runtime service: ${JSON.stringify(e)}`);
+         });
