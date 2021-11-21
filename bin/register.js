@@ -54,6 +54,7 @@ const argv = yargs
     .option('link',
         {
             description: 'Whether the extension is installed as link or not (copy)',
+            alias: 'L',
             type: 'boolean',
             default: false
         })
