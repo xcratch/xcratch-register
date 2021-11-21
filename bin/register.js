@@ -69,6 +69,11 @@ const argv = yargs
             type: 'boolean',
             default: false
         })
+    .option('use',
+        {
+            description: 'Array of directory names to be link-back from the scratch-vm when --link',
+            type: 'array'
+        })
     .help()
     .argv
 
@@ -153,8 +158,11 @@ if (argv.link) {
     webpackConfig = webpackConfig.replace(/symlinks:\s*false/, `symlinks: true`);
     fs.writeFileSync(WebPackConfigFile, webpackConfig);
     // Make links to VM sources for file resolving by dev-server.
-    makeSymbolicLink(path.resolve(VmRoot, `src/extension-support`), path.resolve(ExtBlockPath, '../../extension-support'));
-    makeSymbolicLink(path.resolve(VmRoot, `src/util`), path.resolve(ExtBlockPath, '../../util'));
+    if (argv.use) {
+        argv.use.forEach(dir => {
+            makeSymbolicLink(path.resolve(VmRoot, 'src', dir), path.resolve(ExtBlockPath, '../../', dir));
+        });
+    }
 } else {
     fs.renameSync(VmExtDirPath, `${VmExtDirPath}~`);
     // Copy block dir to scratch-vm. 
