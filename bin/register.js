@@ -34,6 +34,12 @@ const argv = yargs
             description: 'Path of scratch-vm',
             type: 'string'
         })
+    .option('module',
+        {
+            description: 'Path of module',
+            type: 'string',
+            default: './dist'
+        })
     .option('block',
         {
             description: 'Path of block',
@@ -120,14 +126,11 @@ const VmRoot = argv.vm ?
     path.resolve(GuiRoot, './node_modules/scratch-vm');
 
 const ExtBlockPath = path.resolve(process.cwd(), argv.block);
-
+const ExtModulePath = path.resolve(process.cwd(), argv.module);
 const ExtEntryPath = path.resolve(process.cwd(), argv.entry);
 
 const VmExtDirPath = path.resolve(VmRoot, `src/extensions/${ExtDirName}`);
 const GuiExtDirPath = path.resolve(GuiRoot, `src/lib/libraries/extensions/${ExtDirName}`);
-
-const EntryFile = path.resolve(GuiExtDirPath, './index.jsx');
-const BlockFile = path.resolve(VmExtDirPath, './index.js');
 
 const VmExtManagerFile = path.resolve(VmRoot, './src/extension-support/extension-manager.js');
 const VmVirtualMachineFile = path.resolve(VmRoot, './src/virtual-machine.js');
@@ -147,7 +150,8 @@ if (argv.base === 'LLK') {
 
 if (argv.link) {
     // Make symbolic link in scratch-vm. 
-    makeSymbolicLink(ExtBlockPath, VmExtDirPath);
+    makeSymbolicLink(ExtModulePath, VmExtDirPath);
+    makeSymbolicLink(ExtBlockPath, path.resolve(VmExtDirPath, `../${ExtDirName}_src`));
     // Make symbolic link in scratch-gui. 
     makeSymbolicLink(ExtEntryPath, GuiExtDirPath);
     // Setup dev-server to live-reload when the block code was changed.
@@ -163,27 +167,8 @@ if (argv.link) {
     }
 } else {
     // Copy block dir to scratch-vm. 
-    copyDir(ExtBlockPath, VmExtDirPath);
-    console.log(`copy dir ${ExtBlockPath} -> ${VmExtDirPath}`);
-    // Copy entry dir in scratch-gui. 
-    copyDir(ExtEntryPath, GuiExtDirPath);
-    console.log(`copy dir ${ExtEntryPath} -> ${GuiExtDirPath}`);
-}
-
-// Replace URL in entry and block code.
-if (argv.url) {
-    const url = argv.url;
-    // Replace URL in entry
-    let entryCode = fs.readFileSync(EntryFile, 'utf-8');
-    entryCode = entryCode.replace(/extensionURL:\s*[^,]+,/m, `extensionURL: '${url}',`);
-    fs.writeFileSync(EntryFile, entryCode);
-    console.log(`Entry: extensionURL = ${url}`);
-
-    // Replace URL in entry
-    let blockCode = fs.readFileSync(BlockFile, 'utf-8');
-    blockCode = blockCode.replace(/let\s+extensionURL\s+=\s+[^;]+;/m, `let extensionURL = '${url}';`);
-    fs.writeFileSync(BlockFile, blockCode);
-    console.log(`Block: extensionURL = ${url}`);
+    copyDir(ExtModulePath, VmExtDirPath);
+    console.log(`copy dir ${ExtModulePath} -> ${VmExtDirPath}`);
 }
 
 // Add the extension to extension manager of scratch-vm. 
@@ -192,7 +177,7 @@ if (managerCode.includes(`builtinExtensions.${ExtId}`)) {
     console.log(`Already registered in manager: ${ExtId}`);
 } else {
     fs.copyFileSync(VmExtManagerFile, `${VmExtManagerFile}.orig`);
-    managerCode = managerCode.replace(/builtinExtensions = {[\s\S]*?};/, `$&\n\nbuiltinExtensions.${ExtId} = () => {\n    const ext = require('../extensions/${ExtDirName}');\n    const blockClass = ext.default ? ext.default : ext;\n    blockClass.formatMessage = require('format-message');\n    return blockClass;};\n`);
+    managerCode = managerCode.replace(/builtinExtensions = {[\s\S]*?};/, `$&\n\nbuiltinExtensions.${ExtId} = () => {\n    const formatMessage = require('format-message');\n    const ext = require('../extensions/${ExtDirName}/${ExtId}.mjs');\n    const blockClass = ext.blockClass;\n    blockClass.formatMessage = formatMessage;\n    return blockClass;\n};\n`);
     fs.writeFileSync(VmExtManagerFile, managerCode);
     console.log(`Registered in manager: ${ExtId}`);
 }
