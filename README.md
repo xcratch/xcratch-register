@@ -1,3 +1,6 @@
+> :warning: **Development of this tool has been terminated.**
+Projects created with the latest [xcratch-create](https://github.com/xcratch/xcratch-create) do not need this tool.
+
 # Xcratch Command to Register Extension
 This command supports to register an extension in [Xcratch: Extendable Scratch3 Programming Environment](https://xcratch.github.io/).
 
